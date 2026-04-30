@@ -1,0 +1,3 @@
+display_name: Migration Atlas
+short_description: Maintain migration map JSON and rebuild the jump viewer.
+default_prompt: Continue the bundle-to-src migration workflow, keep the JSON maps accurate, refresh target lines, and rebuild the migration viewer.

@@ -1,0 +1,13 @@
+{
+  "name": "@amp/migration-atlas",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.10",
+  "scripts": {
+    "generate-viewer": "bun scripts/generate-viewer.mjs",
+    "serve-viewer": "bun scripts/serve-viewer.mjs",
+    "enrich-map": "bun scripts/enrich-map.mjs",
+    "validate-map": "bun scripts/validate-map.mjs",
+    "refresh-target-lines": "bun scripts/refresh-target-lines.mjs"
+  }
+}
