@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -19,6 +20,47 @@ function normalizePath(filePath) {
   return filePath ? filePath.replaceAll("\\", "/") : null;
 }
 
+function splitPathSegments(filePath) {
+  return normalizePath(filePath)?.split("/").filter(Boolean) ?? [];
+}
+
+function resolveRepoPath(filePath) {
+  const normalized = normalizePath(filePath);
+  if (!normalized) {
+    return null;
+  }
+
+  if (path.isAbsolute(normalized) && fsSync.existsSync(normalized)) {
+    return normalized;
+  }
+
+  return path.resolve(ROOT, normalized);
+}
+
+function remapToWorkspace(filePath) {
+  const normalized = normalizePath(filePath);
+  if (!normalized) {
+    return null;
+  }
+
+  const directPath = resolveRepoPath(normalized);
+  if (directPath && fsSync.existsSync(directPath)) {
+    return directPath;
+  }
+
+  const segments = splitPathSegments(normalized);
+  const formatWorkIndex = segments.indexOf("format-work");
+  const srcIndex = segments.indexOf("src");
+  const docsIndex = segments.indexOf("docs");
+  const anchorIndex = [formatWorkIndex, srcIndex, docsIndex].find((index) => index >= 0);
+
+  if (anchorIndex == null) {
+    return directPath ?? normalized;
+  }
+
+  return path.join(ROOT, ...segments.slice(anchorIndex));
+}
+
 function lineWindow(lines, startLine, endLine) {
   if (!Number.isFinite(startLine) || startLine <= 0) {
     return null;
@@ -36,22 +78,23 @@ function lineWindow(lines, startLine, endLine) {
 
 async function readText(filePath, cache) {
   const normalized = normalizePath(filePath);
-  if (!normalized) {
+  const resolved = remapToWorkspace(filePath);
+  if (!normalized || !resolved) {
     return null;
   }
-  if (cache.has(normalized)) {
-    return cache.get(normalized);
+  if (cache.has(resolved)) {
+    return cache.get(resolved);
   }
 
   try {
-    const content = await fs.readFile(normalized, "utf8");
+    const content = await fs.readFile(resolved, "utf8");
     const lines = content.replace(/\r\n/g, "\n").split("\n");
     const value = { content, lines };
-    cache.set(normalized, value);
+    cache.set(resolved, value);
     return value;
   } catch {
     const value = null;
-    cache.set(normalized, value);
+    cache.set(resolved, value);
     return value;
   }
 }

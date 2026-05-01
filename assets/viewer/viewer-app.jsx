@@ -346,6 +346,12 @@ const STYLES = `
     max-width: 960px;
     font-size: 13px;
   }
+  .meta-line {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
   .masthead-actions {
     display: flex;
     align-items: center;
@@ -364,35 +370,9 @@ const STYLES = `
     border-color: var(--accent);
     color: var(--accent);
   }
-  .summary-strip {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-    margin: 16px 24px 0;
-    border-top: 1px solid var(--border);
-    border-left: 1px solid var(--border);
-  }
-  .summary-cell {
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 12px;
-  }
-  .summary-label {
-    color: var(--muted);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .summary-value {
-    margin-top: 6px;
-    font-size: 18px;
-    font-weight: 700;
-  }
   .workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.78fr);
+    grid-template-columns: minmax(0, 1fr) 272px;
     gap: 16px;
     padding: 18px 24px 0;
     min-width: 0;
@@ -406,7 +386,7 @@ const STYLES = `
   }
   .preview-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
   .section {
@@ -646,16 +626,12 @@ const STYLES = `
       align-items: flex-start;
       flex-direction: column;
     }
-    .summary-strip,
     .workspace,
     .status-line {
       margin-left: 12px;
       margin-right: 12px;
       padding-left: 0;
       padding-right: 0;
-    }
-    .summary-strip {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .workspace {
       gap: 12px;
@@ -1095,12 +1071,6 @@ function App() {
     }
   };
 
-  const summaryCells = [
-    { label: "Total Entries", value: selectedMap?.summary?.totalEntryCount ?? visibleEntries.length },
-    { label: "Migrated", value: selectedMap?.summary?.migratedCount ?? stats[1].value },
-    { label: "Updated", value: selectedEntry?.mapUpdatedAt ?? "Unknown" },
-  ];
-
   const emptyMessage = loadError
     ? `Viewer data failed to load: ${loadError}`
     : isLoading
@@ -1216,10 +1186,11 @@ function App() {
             <div>
               <div className="eyebrow">{selectedEntry?.slice ?? slice ?? "Migration Viewer"}</div>
               <h2>{selectedEntry ? `${selectedEntry.parentName} -> ${selectedEntry.targetSymbol ?? "unmapped"}` : "Select a mapped symbol"}</h2>
-              <p>
-                {selectedEntry?.parentSignature ||
-                  "Choose an entry from the index to inspect the original parent slice, the migrated target, and the recorded jump graph."}
-              </p>
+              <div className="meta-line">
+                {selectedEntry
+                  ? `${selectedEntry.status} · ${selectedEntry.kind} · ${selectedEntry.mapUpdatedAt ?? "unknown update"}`
+                  : "Choose an entry from the index to inspect the original parent slice, the migrated target, and the recorded jump graph."}
+              </div>
             </div>
             <div className="masthead-actions">
               <button
@@ -1244,15 +1215,6 @@ function App() {
               </button>
             </div>
           </header>
-
-          <section className="summary-strip">
-            {summaryCells.map((item) => (
-              <div key={item.label} className="summary-cell">
-                <div className="summary-label">{item.label}</div>
-                <div className="summary-value">{item.value}</div>
-              </div>
-            ))}
-          </section>
 
           {!selectedEntry ? (
             <div className="status-line">{emptyMessage}</div>
@@ -1289,12 +1251,8 @@ function App() {
                     <div className="details-grid">
                       <DetailItem label="Status" value={selectedEntry.status ?? "Unavailable"} status />
                       <DetailItem label="Kind" value={selectedEntry.kind ?? "Unavailable"} />
-                      <DetailItem label="Parent Symbol" value={selectedEntry.parentName ?? "Unavailable"} mono />
-                      <DetailItem label="Target Symbol" value={selectedEntry.targetSymbol ?? "Unmapped"} mono />
-                      <DetailItem label="Parent Ref" value={fileRef(selectedEntry.sourceFile, selectedEntry.parentLine, selectedEntry.parentEndLine)} mono />
-                      <DetailItem label="Target Ref" value={fileRef(selectedEntry.targetFile, selectedEntry.targetLine, selectedEntry.targetEndLine)} mono />
                       <DetailItem label="Slice" value={selectedEntry.slice ?? "Unavailable"} mono />
-                      <DetailItem label="Updated" value={selectedEntry.mapUpdatedAt ?? "Unknown"} mono />
+                      <DetailItem label="Entries In Slice" value={selectedMap?.summary?.totalEntryCount ?? visibleEntries.length} mono />
                     </div>
                   </section>
 
